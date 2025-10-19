@@ -38,7 +38,7 @@ export default function LoginPage() {
       }
 
       // Si tout est valide, rediriger vers le dashboard
-      router.push('/admin/dashboard');
+      router.push('/master/dashboard');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Une erreur est survenue');
     } finally {
