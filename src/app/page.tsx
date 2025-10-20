@@ -25,25 +25,25 @@ export default function HomePage() {
 
           {/* Titre et description */}
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4">
-            <span className="text-green-600 dark:text-green-400">Zoo</span> Kinshasa
+            <span className="text-green-600 dark:text-green-400">Zoo</span> Management
           </h1>
           <p className="text-xl text-gray-600 dark:text-gray-300 mb-10 max-w-lg mx-auto">
-            Système de gestion des visites et exploration de la biodiversité du jardin zoologique
+            Système de gestion des visites et exploration de la biodiversité d'un jardin zoologique
           </p>
 
           {/* Boutons */}
           <div className="flex flex-col sm:flex-row justify-center gap-4 mb-12">
             <Link
-              href="/visitors/tickets"
+              href="/publics/signup"
               className="bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800 text-white px-8 py-4 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 font-medium hover:-translate-y-0.5 text-lg"
             >
-              Acheter un billet
+              S'inscrire
             </Link>
             <Link
               href="/publics/login"
               className="bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 text-green-600 dark:text-green-300 px-8 py-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 font-medium border border-gray-200 dark:border-gray-600 hover:-translate-y-0.5 text-lg"
             >
-              Espace administrateur
+              Se connecter
             </Link>
           </div>
 

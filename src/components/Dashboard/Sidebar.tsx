@@ -16,7 +16,6 @@ export default function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: Sideb
   const navItems = [
     { name: 'Tableau de bord', icon: <FiHome />, path: '/master/dashboard' },
     { name: 'Animaux', icon: <FiHeart />, path: '/master/dashboard/animaux' },
-    { name: 'Espaces', icon: <FiMap />, path: '/master/dashboard/enclosures' },
     { name: 'Tickets', icon: <FiCalendar />, path: '/master/dashboard/programmes' },
     { name: 'Visiteurs', icon: <FiUsers />, path: '/master/dashboard/visiteurs' },
     { name: 'Personnel', icon: <FiShield />, path: '/master/dashboard/members' },
