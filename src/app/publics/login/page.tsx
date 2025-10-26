@@ -57,7 +57,7 @@ export default function LoginPage() {
           className="max-w-md text-center"
         >
           <div className="mb-8">
-            <h1 className="text-4xl font-bold mb-2">Zoo de Kinshasa</h1>
+            <h1 className="text-4xl font-bold mb-2">Zoo Management</h1>
             <p className="text-green-100 dark:text-green-300">Système de gestion des visites</p>
           </div>
           
@@ -164,7 +164,7 @@ export default function LoginPage() {
 
               <div className="text-sm">
                 <Link
-                  href="/admin/recovery"
+                  href="/publics/recovery"
                   className="font-medium text-green-600 dark:text-green-400 hover:text-green-500 dark:hover:text-green-300"
                 >
                   Mot de passe oublié ?
