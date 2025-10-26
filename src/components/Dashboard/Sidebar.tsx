@@ -16,11 +16,12 @@ export default function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: Sideb
   const navItems = [
     { name: 'Tableau de bord', icon: <FiHome />, path: '/master/dashboard' },
     { name: 'Animaux', icon: <FiHeart />, path: '/master/dashboard/animaux' },
-    { name: 'Tickets', icon: <FiCalendar />, path: '/master/dashboard/programmes' },
     { name: 'Visiteurs', icon: <FiUsers />, path: '/master/dashboard/visiteurs' },
     { name: 'Personnel', icon: <FiShield />, path: '/master/dashboard/members' },
-    { name: 'Finances', icon: <FiDollarSign />, path: '/master/dashboard/finances' },
     { name: 'Annonces', icon: <FiBell />, path: '/master/dashboard/announcements' },
+    { name: 'Tickets', icon: <FiCalendar />, path: '/master/dashboard/tickets' },
+    { name: 'Ventes Tickets', icon: <FiDollarSign />, path: '/master/dashboard/ventes' },
+    { name: 'Finances', icon: <FiDollarSign />, path: '/master/dashboard/finances' },
     { name: 'Paramètres', icon: <FiSettings />, path: '/master/dashboard/settings' },
   ];
 

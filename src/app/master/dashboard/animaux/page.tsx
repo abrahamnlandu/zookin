@@ -225,7 +225,148 @@ export default function AnimalsPage() {
   };
 
   const handlePrint = () => {
-    window.print();
+    const printContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Liste des Animaux - Zoo de Kinshasa</title>
+          <style>
+            body { 
+              font-family: Arial, sans-serif; 
+              margin: 20px;
+              color: #333;
+            }
+            .header { 
+              text-align: center; 
+              margin-bottom: 30px;
+              border-bottom: 2px solid #333;
+              padding-bottom: 10px;
+            }
+            .header h1 { 
+              margin: 0; 
+              color: #059669;
+            }
+            .header .date { 
+              color: #666; 
+              margin-top: 5px;
+            }
+            table { 
+              width: 100%; 
+              border-collapse: collapse; 
+              margin-top: 20px;
+            }
+            th, td { 
+              border: 1px solid #ddd; 
+              padding: 12px; 
+              text-align: left;
+            }
+            th { 
+              background-color: #059669; 
+              color: white;
+              font-weight: bold;
+            }
+            tr:nth-child(even) { 
+              background-color: #f9f9f9; 
+            }
+            .health-excellent { color: #059669; font-weight: bold; }
+            .health-bon { color: #2563eb; font-weight: bold; }
+            .health-modéré { color: #d97706; font-weight: bold; }
+            .health-critique { color: #dc2626; font-weight: bold; }
+            .treated { color: #059669; }
+            .not-treated { color: #dc2626; }
+            .summary {
+              margin: 20px 0;
+              padding: 15px;
+              background-color: #f0fdf4;
+              border-left: 4px solid #059669;
+            }
+            @media print {
+              body { margin: 0; }
+              .no-print { display: none; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>Zoo de Kinshasa - Liste des Animaux</h1>
+            <div class="date">Généré le ${new Date().toLocaleDateString('fr-FR')} à ${new Date().toLocaleTimeString('fr-FR')}</div>
+          </div>
+
+          <div class="summary">
+            <strong>Résumé :</strong> ${filteredAnimals.length} animal(s) trouvé(s) 
+            | Soignés aujourd'hui: ${filteredAnimals.filter(a => a.isTreated).length}
+            | Santé critique: ${filteredAnimals.filter(a => a.healthStatus === 'critique').length}
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Nom</th>
+                <th>Espèce</th>
+                <th>Enclos</th>
+                <th>Âge</th>
+                <th>État de santé</th>
+                <th>Soigné</th>
+                <th>Dernier contrôle</th>
+                <th>Prochain contrôle</th>
+                <th>Soigneur</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${filteredAnimals.map(animal => `
+                <tr>
+                  <td><strong>${animal.name}</strong></td>
+                  <td>${animal.species}</td>
+                  <td>${animal.enclosure}</td>
+                  <td>${animal.age} an${animal.age > 1 ? 's' : ''}</td>
+                  <td class="health-${animal.healthStatus}">
+                    ${animal.healthStatus.charAt(0).toUpperCase() + animal.healthStatus.slice(1)}
+                  </td>
+                  <td class="${animal.isTreated ? 'treated' : 'not-treated'}">
+                    ${animal.isTreated ? 'Oui' : 'Non'}
+                  </td>
+                  <td>${new Date(animal.lastCheckup).toLocaleDateString('fr-FR')}</td>
+                  <td>${new Date(animal.nextCheckup).toLocaleDateString('fr-FR')}</td>
+                  <td>${animal.caretaker}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+
+          ${filteredAnimals.some(animal => animal.specialNeeds || animal.notes) ? `
+            <div style="margin-top: 30px;">
+              <h3>Notes importantes :</h3>
+              ${filteredAnimals.filter(animal => animal.specialNeeds || animal.notes).map(animal => `
+                <div style="margin-bottom: 15px; padding: 10px; background: #fff7ed; border-left: 3px solid #ea580c;">
+                  <strong>${animal.name} (${animal.species})</strong><br>
+                  ${animal.specialNeeds ? `<strong>Besoins spéciaux:</strong> ${animal.specialNeeds}<br>` : ''}
+                  ${animal.notes ? `<strong>Notes:</strong> ${animal.notes}` : ''}
+                </div>
+              `).join('')}
+            </div>
+          ` : ''}
+
+          <div style="margin-top: 40px; text-align: center; color: #666; font-size: 12px;">
+            Document généré par le système de gestion du Zoo de Kinshasa
+          </div>
+        </body>
+      </html>
+    `;
+
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(printContent);
+      printWindow.document.close();
+      printWindow.focus();
+      
+      // Attendre que le contenu soit chargé avant d'imprimer
+      printWindow.onload = () => {
+        setTimeout(() => {
+          printWindow.print();
+          // printWindow.close(); // Optionnel : fermer la fenêtre après impression
+        }, 500);
+      };
+    }
   };
 
   const getHealthStatusColor = (status: Animal['healthStatus']) => {
@@ -654,27 +795,6 @@ export default function AnimalsPage() {
           </motion.div>
         </div>
       )}
-
-      {/* Styles pour l'impression */}
-      <style jsx global>{`
-        @media print {
-          body * {
-            visibility: hidden;
-          }
-          .print-section, .print-section * {
-            visibility: visible;
-          }
-          .print-section {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-          }
-          .no-print {
-            display: none !important;
-          }
-        }
-      `}</style>
     </motion.div>
   );
 }
