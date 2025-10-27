@@ -53,6 +53,7 @@ export default function CaissePage() {
     { category: 'Diplomatique', type: 'Enfant', quantity: 0, unitPrice: 0, total: 0 },
     { category: 'Scientifique', type: 'Adulte', quantity: 0, unitPrice: 0, total: 0 },
     { category: 'Scientifique', type: 'Enfant', quantity: 0, unitPrice: 0, total: 0 },
+    
   ]);
 
   const [dailySales, setDailySales] = useState<DailySale[]>([]);
