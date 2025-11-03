@@ -5,8 +5,8 @@ import { motion } from 'framer-motion';
 import { FiPrinter, FiUsers, FiCalendar, FiDollarSign, FiSearch, FiFilter, FiFileText } from 'react-icons/fi';
 
 // Types
-type VisitorCategory = 'National' | 'Expatrié' | 'Diplomatique' | 'Scientifique';
-type PeriodType = 'day' | 'week' | 'month' | 'year';
+type VisitorCategory = 'National' | 'Expatrié' | 'Diplomatique' | 'Scientifique' | 'Tout';
+type PeriodType = 'day' | 'week' | 'month' | 'year' | 'all';
 
 interface Sale {
   id: string;
@@ -39,16 +39,84 @@ export default function VisitorsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPeriod, setSelectedPeriod] = useState<PeriodType>('day');
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [selectedCategory, setSelectedCategory] = useState<VisitorCategory>('Tout');
 
-  // Charger les données depuis le localStorage au chargement
+  // Générer 30 visiteurs pour 2025
+  const generate2025Visitors = (): Sale[] => {
+    const categories: VisitorCategory[] = ['National', 'Expatrié', 'Diplomatique', 'Scientifique'];
+    const firstNames = ['Jean', 'Marie', 'Paul', 'Julie', 'David', 'Sarah', 'Marc', 'Anna', 'Pierre', 'Claire', 'Luc', 'Sophie', 'Jacques', 'Isabelle', 'Michel', 'Nathalie'];
+    const lastNames = ['Kabasele', 'Lutete', 'Mbayo', 'Ngoie', 'Mukendi', 'Tshibanda', 'Kalala', 'Mbuyi', 'Kanku', 'Mpiana', 'Nzuzi', 'Mvita', 'Bakajika', 'Mpoyo', 'Kazadi', 'Mwilambwe'];
+    
+    const visitors: Sale[] = [];
+    
+    for (let i = 1; i <= 30; i++) {
+      const category = categories[Math.floor(Math.random() * categories.length)];
+      const firstName = firstNames[Math.floor(Math.random() * firstNames.length)];
+      const lastName = lastNames[Math.floor(Math.random() * lastNames.length)];
+      const clientName = `${firstName} ${lastName}`;
+      
+      // Générer une date aléatoire en 2025
+      const startDate = new Date('2025-01-01');
+      const endDate = new Date('2025-12-31');
+      const randomDate = new Date(startDate.getTime() + Math.random() * (endDate.getTime() - startDate.getTime()));
+      
+      // Prix basés sur la catégorie (Diplomatique et Scientifique = gratuit)
+      let unitPrice = 0;
+      let quantity = Math.floor(Math.random() * 5) + 1; // 1-5 billets
+      
+      switch (category) {
+        case 'National':
+          unitPrice = 5000; // 5000 FC
+          break;
+        case 'Expatrié':
+          unitPrice = 10000; // 10000 FC
+          break;
+        case 'Diplomatique':
+        case 'Scientifique':
+          unitPrice = 0; // Gratuit
+          break;
+      }
+      
+      const totalAmount = unitPrice * quantity;
+      const discount = 0;
+      const finalAmount = category === 'Diplomatique' || category === 'Scientifique' ? 0 : totalAmount - discount;
+      
+      visitors.push({
+        id: `V2025-${i.toString().padStart(3, '0')}`,
+        date: randomDate.toISOString(),
+        clientName,
+        items: [{
+          category,
+          type: 'Standard',
+          quantity,
+          unitPrice,
+          total: finalAmount
+        }],
+        totalAmount,
+        totalVisitors: quantity,
+        discount,
+        finalAmount
+      });
+    }
+    
+    // Trier par date (du plus récent au plus ancien)
+    return visitors.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  };
+
+  // Charger les données au chargement
   useEffect(() => {
     const savedSales = localStorage.getItem('zoo-sales');
     if (savedSales) {
       setSales(JSON.parse(savedSales));
+    } else {
+      // Générer des données de démonstration pour 2025
+      const demoData = generate2025Visitors();
+      setSales(demoData);
+      localStorage.setItem('zoo-sales', JSON.stringify(demoData));
     }
   }, []);
 
-  // Filtrer les données en fonction de la période et de la recherche
+  // Filtrer les données en fonction de la période, catégorie et recherche
   useEffect(() => {
     let filtered = [...sales];
 
@@ -89,17 +157,28 @@ export default function VisitorsPage() {
           return saleDate >= startOfYear && saleDate <= endOfYear;
         });
         break;
+      case 'all':
+        // Pas de filtre de période
+        break;
+    }
+
+    // Filtrer par catégorie
+    if (selectedCategory !== 'Tout') {
+      filtered = filtered.filter(sale =>
+        sale.items.some(item => item.category === selectedCategory)
+      );
     }
 
     // Filtrer par recherche
     if (searchQuery) {
       filtered = filtered.filter(sale =>
-        sale.clientName.toLowerCase().includes(searchQuery.toLowerCase())
+        sale.clientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        sale.id.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
 
     setFilteredSales(filtered);
-  }, [sales, selectedPeriod, selectedDate, searchQuery]);
+  }, [sales, selectedPeriod, selectedDate, searchQuery, selectedCategory]);
 
   // Calculer les statistiques
   const stats: VisitorStats = {
@@ -122,6 +201,7 @@ export default function VisitorsPage() {
       'Scientifique': filteredSales.flatMap(sale => 
         sale.items.filter(item => item.category === 'Scientifique')
       ).reduce((sum, item) => sum + item.quantity, 0),
+      'Tout': filteredSales.reduce((sum, sale) => sum + sale.totalVisitors, 0)
     }
   };
 
@@ -130,9 +210,22 @@ export default function VisitorsPage() {
     { value: 'week', label: 'Cette semaine' },
     { value: 'month', label: 'Ce mois' },
     { value: 'year', label: 'Cette année' },
+    { value: 'all', label: 'Toutes périodes' },
+  ];
+
+  const categoryOptions = [
+    { value: 'Tout', label: 'Toutes catégories' },
+    { value: 'National', label: 'National' },
+    { value: 'Expatrié', label: 'Expatrié' },
+    { value: 'Diplomatique', label: 'Diplomatique' },
+    { value: 'Scientifique', label: 'Scientifique' },
   ];
 
   const getPeriodLabel = () => {
+    if (selectedPeriod === 'all') {
+      return 'Toutes périodes';
+    }
+    
     const currentDate = new Date(selectedDate);
     switch (selectedPeriod) {
       case 'day':
@@ -154,7 +247,7 @@ export default function VisitorsPage() {
 
   const printVisitorList = () => {
     if (filteredSales.length === 0) {
-      alert('Aucune donnée à imprimer pour la période sélectionnée');
+      alert('Aucune donnée à imprimer pour les critères sélectionnés');
       return;
     }
 
@@ -173,6 +266,7 @@ export default function VisitorsPage() {
             th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
             th { background-color: #1a5632; color: white; }
             .total-row { font-weight: bold; background-color: #e8f5e8; }
+            .free-category { background-color: #fff3cd; }
             .footer { text-align: center; margin-top: 30px; color: #666; font-size: 14px; }
           </style>
         </head>
@@ -181,6 +275,7 @@ export default function VisitorsPage() {
             <h1>Zoo de Kinshasa</h1>
             <h2>LISTE DES VISITEURS</h2>
             <div class="period">Période: ${getPeriodLabel()}</div>
+            <div class="period">Catégorie: ${selectedCategory}</div>
           </div>
 
           <div class="summary">
@@ -197,20 +292,25 @@ export default function VisitorsPage() {
                 <th>Catégorie</th>
                 <th>Nombre de visiteurs</th>
                 <th>Pourcentage</th>
+                <th>Statut</th>
               </tr>
             </thead>
             <tbody>
-              ${Object.entries(stats.categoryBreakdown).map(([category, count]) => `
-                <tr>
+              ${Object.entries(stats.categoryBreakdown)
+                .filter(([category]) => category !== 'Tout')
+                .map(([category, count]) => `
+                <tr class="${category === 'Diplomatique' || category === 'Scientifique' ? 'free-category' : ''}">
                   <td>${category}</td>
                   <td>${count}</td>
                   <td>${stats.totalVisitors > 0 ? ((count / stats.totalVisitors) * 100).toFixed(1) : 0}%</td>
+                  <td>${category === 'Diplomatique' || category === 'Scientifique' ? 'GRATUIT' : 'PAYANT'}</td>
                 </tr>
               `).join('')}
               <tr class="total-row">
                 <td>TOTAL</td>
                 <td>${stats.totalVisitors}</td>
                 <td>100%</td>
+                <td>-</td>
               </tr>
             </tbody>
           </table>
@@ -220,22 +320,29 @@ export default function VisitorsPage() {
             <thead>
               <tr>
                 <th>Date</th>
+                <th>Référence</th>
                 <th>Client</th>
                 <th>Nombre de billets</th>
+                <th>Catégorie</th>
                 <th>Montant payé</th>
-                <th>Catégories</th>
+                <th>Statut</th>
               </tr>
             </thead>
             <tbody>
-              ${filteredSales.map(sale => `
-                <tr>
+              ${filteredSales.map(sale => {
+                const category = sale.items[0].category;
+                const isFree = category === 'Diplomatique' || category === 'Scientifique';
+                return `
+                <tr class="${isFree ? 'free-category' : ''}">
                   <td>${new Date(sale.date).toLocaleDateString('fr-FR')}</td>
+                  <td>${sale.id}</td>
                   <td>${sale.clientName}</td>
                   <td>${sale.totalVisitors}</td>
+                  <td>${category}</td>
                   <td>${sale.finalAmount.toLocaleString()} FC</td>
-                  <td>${[...new Set(sale.items.filter(item => item.quantity > 0).map(item => item.category))].join(', ')}</td>
+                  <td>${isFree ? 'GRATUIT' : 'PAYANT'}</td>
                 </tr>
-              `).join('')}
+              `}).join('')}
             </tbody>
           </table>
 
@@ -259,7 +366,7 @@ export default function VisitorsPage() {
 
   const printDetailedReport = () => {
     if (filteredSales.length === 0) {
-      alert('Aucune donnée à imprimer pour la période sélectionnée');
+      alert('Aucune donnée à imprimer pour les critères sélectionnés');
       return;
     }
 
@@ -280,6 +387,7 @@ export default function VisitorsPage() {
             table { width: 100%; border-collapse: collapse; margin: 20px 0; }
             th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
             th { background-color: #1a5632; color: white; }
+            .free-category { background-color: #fff3cd; }
             .footer { text-align: center; margin-top: 30px; color: #666; font-size: 14px; }
           </style>
         </head>
@@ -288,6 +396,7 @@ export default function VisitorsPage() {
             <h1>Zoo de Kinshasa</h1>
             <h2>RAPPORT DÉTAILLÉ DES VISITEURS</h2>
             <div class="period">Période: ${getPeriodLabel()}</div>
+            <div class="period">Catégorie: ${selectedCategory}</div>
           </div>
 
           <div class="stats-grid">
@@ -317,20 +426,25 @@ export default function VisitorsPage() {
                 <th>Nombre</th>
                 <th>Pourcentage</th>
                 <th>Recettes</th>
+                <th>Statut</th>
               </tr>
             </thead>
             <tbody>
-              ${Object.entries(stats.categoryBreakdown).map(([category, count]) => {
-                const categoryRevenue = filteredSales.flatMap(sale => 
-                  sale.items.filter(item => item.category === category)
-                ).reduce((sum, item) => sum + item.total, 0);
-                
-                return `
-                  <tr>
+              ${Object.entries(stats.categoryBreakdown)
+                .filter(([category]) => category !== 'Tout')
+                .map(([category, count]) => {
+                  const categoryRevenue = filteredSales
+                    .filter(sale => sale.items.some(item => item.category === category))
+                    .reduce((sum, sale) => sum + sale.finalAmount, 0);
+                  const isFree = category === 'Diplomatique' || category === 'Scientifique';
+                  
+                  return `
+                  <tr class="${isFree ? 'free-category' : ''}">
                     <td>${category}</td>
                     <td>${count}</td>
                     <td>${stats.totalVisitors > 0 ? ((count / stats.totalVisitors) * 100).toFixed(1) : 0}%</td>
                     <td>${categoryRevenue.toLocaleString()} FC</td>
+                    <td>${isFree ? 'GRATUIT' : 'PAYANT'}</td>
                   </tr>
                 `;
               }).join('')}
@@ -345,27 +459,28 @@ export default function VisitorsPage() {
                 <th>Référence</th>
                 <th>Client</th>
                 <th>Billets</th>
-                <th>Détail des catégories</th>
+                <th>Catégorie</th>
+                <th>Prix unitaire</th>
                 <th>Montant</th>
-                <th>Réduction</th>
-                <th>Net</th>
+                <th>Statut</th>
               </tr>
             </thead>
             <tbody>
-              ${filteredSales.map(sale => `
-                <tr>
+              ${filteredSales.map(sale => {
+                const category = sale.items[0].category;
+                const isFree = category === 'Diplomatique' || category === 'Scientifique';
+                return `
+                <tr class="${isFree ? 'free-category' : ''}">
                   <td>${new Date(sale.date).toLocaleString('fr-FR')}</td>
                   <td>${sale.id}</td>
                   <td>${sale.clientName}</td>
                   <td>${sale.totalVisitors}</td>
-                  <td>${sale.items.filter(item => item.quantity > 0).map(item => 
-                    `${item.quantity} ${item.category}-${item.type}`
-                  ).join(', ')}</td>
-                  <td>${sale.totalAmount.toLocaleString()} FC</td>
-                  <td>${sale.discount.toLocaleString()} FC</td>
+                  <td>${category}</td>
+                  <td>${sale.items[0].unitPrice.toLocaleString()} FC</td>
                   <td>${sale.finalAmount.toLocaleString()} FC</td>
+                  <td>${isFree ? 'GRATUIT' : 'PAYANT'}</td>
                 </tr>
-              `).join('')}
+              `}).join('')}
             </tbody>
           </table>
 
@@ -398,7 +513,7 @@ export default function VisitorsPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Gestion des Visiteurs</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            Suivi des clients et statistiques de fréquentation - {getPeriodLabel()}
+            Suivi des clients et statistiques de fréquentation - {getPeriodLabel()} - {selectedCategory}
           </p>
         </div>
         <div className="flex gap-2">
@@ -489,7 +604,7 @@ export default function VisitorsPage() {
       {/* Filtres */}
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
         <div className="flex flex-col md:flex-row gap-4 mb-6">
-          <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Période
@@ -519,7 +634,23 @@ export default function VisitorsPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Recherche client
+                Catégorie
+              </label>
+              <select
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value as VisitorCategory)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white"
+              >
+                {categoryOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Recherche
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -527,7 +658,7 @@ export default function VisitorsPage() {
                 </div>
                 <input
                   type="text"
-                  placeholder="Nom du client..."
+                  placeholder="Nom ou référence..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white"
@@ -540,14 +671,30 @@ export default function VisitorsPage() {
         {/* Répartition par catégorie */}
         <div className="mb-6">
           <h3 className="text-lg font-semibold mb-4">Répartition par catégorie de visiteur</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {Object.entries(stats.categoryBreakdown).map(([category, count]) => (
-              <div key={category} className="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg">
-                <div className="text-sm font-medium text-gray-500 dark:text-gray-400">{category}</div>
-                <div className="text-2xl font-bold text-gray-900 dark:text-white">{count}</div>
-                <div className="text-sm text-gray-500 dark:text-gray-400">
-                  {stats.totalVisitors > 0 ? ((count / stats.totalVisitors) * 100).toFixed(1) : 0}%
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            {categoryOptions.map((category) => (
+              <div 
+                key={category.value} 
+                className={`p-4 rounded-lg border ${
+                  category.value === 'Diplomatique' || category.value === 'Scientifique' 
+                    ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800' 
+                    : 'bg-gray-50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-600'
+                }`}
+              >
+                <div className="text-sm font-medium text-gray-500 dark:text-gray-400">{category.label}</div>
+                <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {stats.categoryBreakdown[category.value as VisitorCategory]}
                 </div>
+                <div className="text-sm text-gray-500 dark:text-gray-400">
+                  {stats.totalVisitors > 0 ? 
+                    ((stats.categoryBreakdown[category.value as VisitorCategory] / stats.totalVisitors) * 100).toFixed(1) 
+                    : 0}%
+                </div>
+                {(category.value === 'Diplomatique' || category.value === 'Scientifique') && (
+                  <div className="text-xs text-yellow-600 dark:text-yellow-400 font-medium mt-1">
+                    GRATUIT
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -562,44 +709,69 @@ export default function VisitorsPage() {
                   Date
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Référence
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Client
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Billets achetés
+                  Billets
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Catégories
+                  Catégorie
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Montant payé
+                  Montant
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Statut
                 </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-              {filteredSales.map((sale) => (
-                <motion.tr 
-                  key={sale.id}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="hover:bg-gray-50 dark:hover:bg-gray-700/50"
-                >
-                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                    {new Date(sale.date).toLocaleDateString('fr-FR')}
-                  </td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                    {sale.clientName}
-                  </td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                    {sale.totalVisitors} billet(s)
-                  </td>
-                  <td className="px-4 py-4 text-sm text-gray-500 dark:text-gray-400">
-                    {[...new Set(sale.items.filter(item => item.quantity > 0).map(item => item.category))].join(', ')}
-                  </td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                    {sale.finalAmount.toLocaleString()} FC
-                  </td>
-                </motion.tr>
-              ))}
+              {filteredSales.map((sale) => {
+                const category = sale.items[0].category;
+                const isFree = category === 'Diplomatique' || category === 'Scientifique';
+                
+                return (
+                  <motion.tr 
+                    key={sale.id}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className={`hover:bg-gray-50 dark:hover:bg-gray-700/50 ${
+                      isFree ? 'bg-yellow-50 dark:bg-yellow-900/20' : ''
+                    }`}
+                  >
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                      {new Date(sale.date).toLocaleDateString('fr-FR')}
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm font-mono text-gray-900 dark:text-white">
+                      {sale.id}
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
+                      {sale.clientName}
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                      {sale.totalVisitors} billet(s)
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                      {category}
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
+                      {sale.finalAmount.toLocaleString()} FC
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                        isFree 
+                          ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300' 
+                          : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
+                      }`}>
+                        {isFree ? 'GRATUIT' : 'PAYANT'}
+                      </span>
+                    </td>
+                  </motion.tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

@@ -2,8 +2,8 @@
 import '@/app/globals.css';
 
 export const metadata = {
-  title: 'Church App',
-  description: 'La plateforme numérique complète pour connecter et gérer votre communauté paroissiale',
+  title: 'Zoo Kin',
+  description: 'La plateforme numérique complète pour connecter et gérer votre esapce',
 };
 
 export default function RootLayout({
