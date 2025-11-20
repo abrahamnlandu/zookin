@@ -366,7 +366,7 @@ export default function DashboardPage() {
           className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6"
         >
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-lg font-semibold">Finances du zoo (CDF)</h2>
+            <h2 className="text-lg font-semibold">La caisse du zoo (CDF)</h2>
             <div className="flex items-center text-sm text-green-600 dark:text-green-400">
               <FiTrendingUp className="mr-1" />
               <span>+{financialSummary.growth}% ce mois</span>

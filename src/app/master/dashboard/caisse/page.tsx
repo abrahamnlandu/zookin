@@ -2,12 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { FiPrinter, FiDollarSign, FiUsers, FiFileText, FiPlus, FiMinus, FiShoppingCart, FiUser, FiCheck, FiX, FiAlertTriangle } from 'react-icons/fi';
+import { FiPrinter, FiDollarSign, FiUsers, FiFileText, FiPlus, FiMinus, FiShoppingCart, FiUser, FiCheck, FiX, FiAlertTriangle, FiCalendar, FiFilter } from 'react-icons/fi';
 
 // Types
 type VisitorCategory = 'National' | 'Expatrié' | 'Diplomatique' | 'Scientifique';
 type TicketType = 'Adulte' | 'Enfant';
 type FinanceOrderStatus = 'pending' | 'processed';
+type ReportPeriod = 'day' | 'week' | 'month' | 'year' | 'all';
+type ReportType = 'amount' | 'visitors' | 'both';
 
 interface SaleItem {
   category: VisitorCategory;
@@ -60,6 +62,9 @@ export default function CaissePage() {
   const [currentSaleId, setCurrentSaleId] = useState<string>('');
   const [clientName, setClientName] = useState<string>('');
   const [activeTab, setActiveTab] = useState<'sales' | 'orders'>('sales');
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportPeriod, setReportPeriod] = useState<ReportPeriod>('day');
+  const [reportType, setReportType] = useState<ReportType>('both');
 
   // Prix fixes
   const prices = {
@@ -103,7 +108,6 @@ export default function CaissePage() {
           setFinanceOrders(parsedOrders);
         } else {
           console.error('Données de commandes invalides dans le localStorage');
-          // Nettoyer les données invalides
           localStorage.removeItem('zoo-finance-orders');
           setFinanceOrders([]);
         }
@@ -179,6 +183,227 @@ export default function CaissePage() {
     newSales[index].quantity = newQuantity;
     newSales[index].total = newQuantity * newSales[index].unitPrice;
     setSales(newSales);
+  };
+
+  // Fonction pour filtrer les ventes par période
+  const filterSalesByPeriod = (period: ReportPeriod): DailySale[] => {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    
+    return dailySales.filter(sale => {
+      const saleDate = new Date(sale.date);
+      
+      switch (period) {
+        case 'day':
+          return saleDate >= today;
+        
+        case 'week':
+          const startOfWeek = new Date(today);
+          startOfWeek.setDate(today.getDate() - today.getDay());
+          return saleDate >= startOfWeek;
+        
+        case 'month':
+          const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+          return saleDate >= startOfMonth;
+        
+        case 'year':
+          const startOfYear = new Date(now.getFullYear(), 0, 1);
+          return saleDate >= startOfYear;
+        
+        case 'all':
+          return true;
+        
+        default:
+          return true;
+      }
+    });
+  };
+
+  // Fonction pour générer et imprimer le rapport personnalisé
+  const printCustomReport = () => {
+    const filteredSales = filterSalesByPeriod(reportPeriod);
+    
+    if (filteredSales.length === 0) {
+      alert('Aucune vente trouvée pour la période sélectionnée');
+      return;
+    }
+
+    const periodLabels = {
+      day: 'Aujourd\'hui',
+      week: 'Cette semaine',
+      month: 'Ce mois',
+      year: 'Cette année',
+      all: 'Toutes périodes'
+    };
+
+    const typeLabels = {
+      amount: 'Montant vendu',
+      visitors: 'Nombre de visites',
+      both: 'Montant et nombre de visites'
+    };
+
+    const totalVisitors = filteredSales.reduce((sum, sale) => sum + sale.totalVisitors, 0);
+    const totalAmount = filteredSales.reduce((sum, sale) => sum + sale.finalAmount, 0);
+
+    const reportContent = `
+      <html>
+        <head>
+          <title>Rapport Visiteurs - Zoo Kinshasa</title>
+          <style>
+            body { 
+              font-family: Arial, sans-serif; 
+              margin: 20px; 
+              max-width: 800px;
+            }
+            .header { 
+              text-align: center; 
+              margin-bottom: 30px; 
+              border-bottom: 3px solid #1a5632; 
+              padding-bottom: 15px; 
+            }
+            h1 { 
+              color: #1a5632; 
+              margin: 0; 
+              font-size: 28px;
+            }
+            h2 { 
+              color: #333; 
+              margin: 10px 0; 
+              font-size: 18px;
+            }
+            .report-info { 
+              display: flex; 
+              justify-content: space-between;
+              margin: 20px 0;
+              padding: 15px;
+              background: #f8f9fa;
+              border-radius: 5px;
+            }
+            .info-item {
+              text-align: center;
+            }
+            .info-label {
+              font-size: 12px;
+              color: #666;
+              text-transform: uppercase;
+            }
+            .info-value {
+              font-size: 16px;
+              font-weight: bold;
+              color: #1a5632;
+            }
+            table { 
+              width: 100%; 
+              border-collapse: collapse; 
+              margin: 20px 0; 
+            }
+            th, td { 
+              border: 1px solid #ddd; 
+              padding: 12px; 
+              text-align: left; 
+            }
+            th { 
+              background-color: #1a5632; 
+              color: white; 
+              font-weight: bold;
+            }
+            tr:nth-child(even) {
+              background-color: #f9f9f9;
+            }
+            .total-row { 
+              font-weight: bold; 
+              background-color: #e8f5e8; 
+            }
+            .footer { 
+              text-align: center; 
+              margin-top: 30px; 
+              color: #666; 
+              font-size: 12px;
+              border-top: 1px solid #ddd;
+              padding-top: 15px;
+            }
+            .period-info {
+              text-align: center;
+              margin: 10px 0;
+              color: #666;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>Zoo de Kinshasa</h1>
+            <h2>RAPPORT DES VISITEURS</h2>
+            <div class="period-info">
+              Période: ${periodLabels[reportPeriod]} | 
+              Type: ${typeLabels[reportType]} |
+              Généré le: ${new Date().toLocaleDateString('fr-FR')}
+            </div>
+          </div>
+
+          <div class="report-info">
+            <div class="info-item">
+              <div class="info-label">Total Ventes</div>
+              <div class="info-value">${filteredSales.length}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Total Visiteurs</div>
+              <div class="info-value">${totalVisitors}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Montant Total</div>
+              <div class="info-value">${totalAmount.toLocaleString()} FC</div>
+            </div>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Nom du Visiteur</th>
+                ${reportType !== 'visitors' ? '<th>Montant Vendue (FC)</th>' : ''}
+                ${reportType !== 'amount' ? '<th>Nombre de Visites</th>' : ''}
+                <th>Date</th>
+                <th>Facture</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${filteredSales.map(sale => `
+                <tr>
+                  <td>${sale.clientName}</td>
+                  ${reportType !== 'visitors' ? `<td>${sale.finalAmount.toLocaleString()} FC</td>` : ''}
+                  ${reportType !== 'amount' ? `<td>${sale.totalVisitors}</td>` : ''}
+                  <td>${new Date(sale.date).toLocaleDateString('fr-FR')}</td>
+                  <td>${sale.invoiceNumber}</td>
+                </tr>
+              `).join('')}
+              <tr class="total-row">
+                <td><strong>TOTAUX</strong></td>
+                ${reportType !== 'visitors' ? `<td><strong>${totalAmount.toLocaleString()} FC</strong></td>` : ''}
+                ${reportType !== 'amount' ? `<td><strong>${totalVisitors}</strong></td>` : ''}
+                <td colspan="2"></td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="footer">
+            <p>Zoo de Kinshasa - BP 1234 Kinshasa</p>
+            <p>Tél: +243 81 123 4567 | Email: info@zookinshasa.cd</p>
+            <p>www.zookinshasa.cd</p>
+            <p>Rapport généré le ${new Date().toLocaleString('fr-FR')}</p>
+          </div>
+        </body>
+      </html>
+    `;
+
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(reportContent);
+      printWindow.document.close();
+      printWindow.print();
+    } else {
+      alert('Veuillez autoriser les fenêtres pop-up pour imprimer le rapport.');
+    }
+    
+    setShowReportModal(false);
   };
 
   // Traiter une commande en attente
@@ -585,6 +810,15 @@ export default function CaissePage() {
             <FiFileText className="text-lg" />
             <span>Rapport journalier</span>
           </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => setShowReportModal(true)}
+            className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors"
+          >
+            <FiFilter className="text-lg" />
+            <span>Rapport personnalisé</span>
+          </motion.button>
         </div>
       </div>
 
@@ -642,7 +876,7 @@ export default function CaissePage() {
                     type="text"
                     value={clientName}
                     onChange={(e) => setClientName(e.target.value)}
-                    placeholder="Ex: Jean Kamba ou Entreprise XYZ"
+                    placeholder="Ex: Charon LEMBA ou Entreprise X"
                     className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white transition-colors"
                   />
                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
@@ -985,6 +1219,101 @@ export default function CaissePage() {
           )}
         </div>
       </div>
+
+      {/* Modal pour le rapport personnalisé */}
+      {showReportModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white dark:bg-gray-800 rounded-xl p-6 w-full max-w-md"
+          >
+            <h2 className="text-lg font-semibold mb-4 flex items-center">
+              <FiFileText className="mr-2 text-purple-600" />
+              Rapport Personnalisé
+            </h2>
+
+            <div className="space-y-4">
+              {/* Sélection de la période */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <FiCalendar className="inline mr-2" />
+                  Période du rapport
+                </label>
+                <select
+                  value={reportPeriod}
+                  onChange={(e) => setReportPeriod(e.target.value as ReportPeriod)}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white"
+                >
+                  <option value="day">Aujourd'hui</option>
+                  <option value="week">Cette semaine</option>
+                  <option value="month">Ce mois</option>
+                  <option value="year">Cette année</option>
+                  <option value="all">Toutes périodes</option>
+                </select>
+              </div>
+
+              {/* Sélection du type de données */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <FiDollarSign className="inline mr-2" />
+                  Type de données à afficher
+                </label>
+                <select
+                  value={reportType}
+                  onChange={(e) => setReportType(e.target.value as ReportType)}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white"
+                >
+                  <option value="both">Montant et nombre de visites</option>
+                  <option value="amount">Montant vendu seulement</option>
+                  <option value="visitors">Nombre de visites seulement</option>
+                </select>
+              </div>
+
+              {/* Aperçu des statistiques */}
+              <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Aperçu de la période sélectionnée:
+                </h3>
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div className="text-gray-600 dark:text-gray-400">Ventes:</div>
+                  <div className="font-medium">{filterSalesByPeriod(reportPeriod).length}</div>
+                  
+                  <div className="text-gray-600 dark:text-gray-400">Visiteurs:</div>
+                  <div className="font-medium">
+                    {filterSalesByPeriod(reportPeriod).reduce((sum, sale) => sum + sale.totalVisitors, 0)}
+                  </div>
+                  
+                  <div className="text-gray-600 dark:text-gray-400">Montant total:</div>
+                  <div className="font-medium">
+                    {filterSalesByPeriod(reportPeriod).reduce((sum, sale) => sum + sale.finalAmount, 0).toLocaleString()} FC
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6 flex gap-2">
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={printCustomReport}
+                className="flex-1 bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-lg font-medium transition-colors flex items-center justify-center"
+              >
+                <FiPrinter className="mr-2" />
+                Générer le rapport
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setShowReportModal(false)}
+                className="bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-800 dark:text-white py-2 px-4 rounded-lg font-medium transition-colors"
+              >
+                Annuler
+              </motion.button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </motion.div>
   );
 }

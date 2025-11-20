@@ -21,7 +21,7 @@ export default function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: Sideb
     { name: 'Annonces', icon: <FiBell />, path: '/master/dashboard/announcements' },
     { name: 'Tickets', icon: <FiCalendar />, path: '/master/dashboard/tickets' },
     { name: 'Ventes Tickets', icon: <FiDollarSign />, path: '/master/dashboard/ventes' },
-    { name: 'Finances', icon: <FiDollarSign />, path: '/master/dashboard/finances' },
+    { name: 'Caisse', icon: <FiDollarSign />, path: '/master/dashboard/caisse' },
     { name: 'Paramètres', icon: <FiSettings />, path: '/master/dashboard/settings' },
   ];
 
