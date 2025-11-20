@@ -49,7 +49,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-gray-50 dark:bg-gray-900">
       {/* Colonne de gauche - Illustration */}
-      <div className="md:w-1/2 bg-gradient-to-br from-green-600 to-emerald-800 dark:from-green-900 dark:to-emerald-950 text-white p-12 flex flex-col justify-center items-center">
+      <div className="md:w-1/2 bg-gradient-to-br from-blue-900 to-blue-700 dark:from-blue-750 dark:to-blue-950 text-white p-12 flex flex-col justify-center items-center">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

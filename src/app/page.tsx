@@ -5,32 +5,31 @@ import { motion } from 'framer-motion';
 
 export default function HomePage() {
   return (
-    <div 
-      className="min-h-screen flex items-center justify-center p-6 relative"
-      style={{
-        backgroundImage: "url('/zoo-background.jpg')",
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
-      }}
-    >
-      {/* Overlay sombre pour améliorer la lisibilité */}
-      <div className="absolute inset-0 bg-black bg-opacity-40 dark:bg-opacity-60"></div>
+    <div className="min-h-screen flex items-center justify-center p-6 relative overflow-hidden">
+      {/* Image de background avec overlay moins opaque */}
+      <div className="absolute inset-0 z-0">
+        <img 
+          src="/background.jpg" 
+          alt="Background Jardin Zoologique"
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-opacity-30 dark:bg-opacity-50"></div>
+      </div>
       
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="w-full max-w-2xl bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden relative z-10"
+        className="w-full max-w-2xl bg-white/90 dark:bg-gray-800/90 rounded-2xl shadow-xl overflow-hidden relative z-10 backdrop-blur-sm"
       >
         <div className="p-12 text-center">
-          {/* Logo */}
+          {/* Logo agrandi qui remplit le carré */}
           <div className="mb-8 flex justify-center">
-            <div className="bg-green-100 dark:bg-green-900/50 p-4 rounded-2xl">
+            <div className="bg-green-100 dark:bg-green-100 rounded-2xl w-100 h-30 flex items-center justify-center">
               <img 
                 src="/images.png" 
                 alt="Logo Jardin Zoologique de Kinshasa" 
-                className="h-12 w-12 object-contain"
+                className="w-full h-full object-contain p-2"
               />
             </div>
           </div>
