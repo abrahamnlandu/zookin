@@ -57,7 +57,7 @@ export default function LoginPage() {
           className="max-w-md text-center"
         >
           <div className="mb-8">
-            <h1 className="text-4xl font-bold mb-2">Zoo Management</h1>
+            <h1 className="text-4xl font-bold mb-2">Jardin Zoologique de Kin.</h1>
             <p className="text-green-100 dark:text-green-300">Système de gestion des visites</p>
           </div>
           
@@ -65,11 +65,11 @@ export default function LoginPage() {
             <div className="bg-white/10 backdrop-blur-sm p-6 rounded-xl border border-white/20">
               <h2 className="text-xl font-semibold mb-4">Accès Personnel</h2>
               <p className="text-green-100 dark:text-green-200 mb-4">
-                Connectez-vous pour accéder au tableau de bord de gestion du zoo et des visiteurs.
+                Connectez-vous pour accéder au tableau de bord de gestion des visiteurs.
               </p>
               <div className="flex items-center justify-center space-x-2 text-sm">
                 <FiArrowRight className="animate-pulse" />
-                <span>Gestion sécurisée des données</span>
+                <span>La Gestion sécurisée des données</span>
               </div>
             </div>
           </div>
@@ -196,8 +196,10 @@ export default function LoginPage() {
               </button>
             </div>
           </form>
+          
 
-          <div className="mt-6">
+          
+          {/* <div className="mt-6">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-gray-300 dark:border-gray-700"></div>
@@ -217,7 +219,7 @@ export default function LoginPage() {
                 S'inscrire
               </Link>
             </div>
-          </div>
+          </div> */}
 
           <div className="mt-8 text-center text-xs text-gray-500 dark:text-gray-400">
             <p>Accès réservé au personnel autorisé du Jardin Zoologique de Kinshasa.</p>
