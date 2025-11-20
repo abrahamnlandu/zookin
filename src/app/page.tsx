@@ -20,12 +20,12 @@ export default function HomePage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="w-full max-w-2xl bg-white/90 dark:bg-gray-800/90 rounded-2xl shadow-xl overflow-hidden relative z-10 backdrop-blur-sm"
+        className="w-full max-w-2xl bg-white/50 dark:bg-gray-800/50 rounded-2xl shadow-xl overflow-hidden relative z-10 backdrop-blur-sm"
       >
         <div className="p-12 text-center">
           {/* Logo agrandi qui remplit le carré */}
           <div className="mb-8 flex justify-center">
-            <div className="bg-green-100 dark:bg-green-100 rounded-2xl w-100 h-30 flex items-center justify-center">
+            <div className="bg-green-300 dark:bg-green-100 rounded-2xl w-100 h-30 flex items-center justify-center">
               <img 
                 src="/images.png" 
                 alt="Logo Jardin Zoologique de Kinshasa" 

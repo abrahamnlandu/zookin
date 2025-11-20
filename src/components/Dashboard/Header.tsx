@@ -56,7 +56,7 @@ export default function Header({ setIsMobileMenuOpen, navItems }: HeaderProps) {
             </div>
             <input
               type="text"
-              placeholder="Rechercher animaux, espaces, personnel..."
+              placeholder="Rechercher quelque chose dans l'app..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg leading-5 bg-white dark:bg-gray-700 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-green-500 focus:border-green-500 dark:text-white"
@@ -85,8 +85,8 @@ export default function Header({ setIsMobileMenuOpen, navItems }: HeaderProps) {
                 <FiUser />
               </div>
               <div className="hidden md:block text-left">
-                <p className="text-sm font-medium text-gray-700 dark:text-gray-200">Staff Zoo</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Administrateur</p>
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-200">Manage</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Admin</p>
               </div>
               <motion.span 
                 animate={{ rotate: isProfileMenuOpen ? 180 : 0 }}
@@ -107,7 +107,7 @@ export default function Header({ setIsMobileMenuOpen, navItems }: HeaderProps) {
                   className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-10 overflow-hidden"
                 >
                   <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
-                    <p className="font-medium text-gray-800 dark:text-white">Staff Zoo</p>
+                    <p className="font-medium text-gray-800 dark:text-white">Administrateur</p>
                     <p className="text-sm text-gray-500 dark:text-gray-400">admin@zookinshasa.cd</p>
                   </div>
                   <div className="p-2">
