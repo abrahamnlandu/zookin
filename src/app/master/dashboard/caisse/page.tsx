@@ -877,7 +877,7 @@ export default function CaissePage() {
                     type="text"
                     value={clientName}
                     onChange={(e) => setClientName(e.target.value)}
-                    placeholder="Ex: Charon LEMBA ou Entreprise X"
+                    placeholder="Ex: Charon Lema ou Entreprise X"
                     className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white transition-colors"
                   />
                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">

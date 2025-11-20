@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { FiHome, FiCalendar, FiBook, FiMic, FiBell, FiUsers, FiDollarSign, FiSettings, FiLogOut, FiX, FiMap, FiHeart, FiShield } from 'react-icons/fi';
 import { motion } from 'framer-motion';
+import Image from 'next/image';
 
 interface SidebarProps {
   isMobileMenuOpen: boolean;
@@ -43,9 +44,15 @@ export default function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: Sideb
           <div className="flex items-center space-x-3">
             <motion.div 
               whileHover={{ rotate: 5 }}
-              className="h-10 w-10 rounded-lg bg-gradient-to-r from-green-500 to-emerald-600 flex items-center justify-center text-white font-bold"
+              className="h-10 w-10 rounded-lg flex items-center justify-center overflow-hidden"
             >
-              ZK
+              <Image 
+                src="/images.png" 
+                alt="Logo Zoo Kinshasa" 
+                width={40} 
+                height={40}
+                className="object-cover"
+              />
             </motion.div>
             <div>
               <h1 className="font-bold text-gray-800 dark:text-white">Zoo Kinshasa</h1>
@@ -115,8 +122,14 @@ export default function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: Sideb
               animate={{ scale: 1 }}
               className="flex items-center space-x-3"
             >
-              <div className="h-10 w-10 rounded-lg bg-gradient-to-r from-green-500 to-emerald-600 flex items-center justify-center text-white font-bold">
-                ZK
+              <div className="h-10 w-10 rounded-lg flex items-center justify-center overflow-hidden">
+                <Image 
+                  src="/images.png" 
+                  alt="Logo Zoo Kinshasa" 
+                  width={40} 
+                  height={40}
+                  className="object-cover"
+                />
               </div>
               <h1 className="font-bold text-gray-800 dark:text-white">Zoo Kinshasa</h1>
             </motion.div>
