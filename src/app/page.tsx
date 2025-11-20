@@ -5,40 +5,46 @@ import { motion } from 'framer-motion';
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-emerald-100 dark:from-gray-900 dark:to-emerald-950 p-6">
+    <div 
+      className="min-h-screen flex items-center justify-center p-6 relative"
+      style={{
+        backgroundImage: "url('/zoo-background.jpg')",
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+      }}
+    >
+      {/* Overlay sombre pour améliorer la lisibilité */}
+      <div className="absolute inset-0 bg-black bg-opacity-40 dark:bg-opacity-60"></div>
+      
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="w-full max-w-2xl bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden"
+        className="w-full max-w-2xl bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden relative z-10"
       >
         <div className="p-12 text-center">
-          {/* Icône animale */}
+          {/* Logo */}
           <div className="mb-8 flex justify-center">
             <div className="bg-green-100 dark:bg-green-900/50 p-4 rounded-2xl">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4" />
-              </svg>
+              <img 
+                src="/images.png" 
+                alt="Logo Jardin Zoologique de Kinshasa" 
+                className="h-12 w-12 object-contain"
+              />
             </div>
           </div>
 
           {/* Titre et description */}
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4">
-            <span className="text-green-600 dark:text-green-400">Zoo</span> Management
+            <span className="text-green-600 dark:text-green-400">Jardin Zoologique</span> de Kinshasa
           </h1>
           <p className="text-xl text-gray-600 dark:text-gray-300 mb-10 max-w-lg mx-auto">
-            Système de gestion des visites et exploration de la biodiversité d'un jardin zoologique
+            Système de gestion des visites
           </p>
 
           {/* Boutons */}
           <div className="flex flex-col sm:flex-row justify-center gap-4 mb-12">
-            <Link
-              href="/publics/signup"
-              className="bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800 text-white px-8 py-4 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 font-medium hover:-translate-y-0.5 text-lg"
-            >
-              S'inscrire
-            </Link>
             <Link
               href="/publics/login"
               className="bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 text-green-600 dark:text-green-300 px-8 py-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 font-medium border border-gray-200 dark:border-gray-600 hover:-translate-y-0.5 text-lg"

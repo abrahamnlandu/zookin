@@ -22,7 +22,7 @@ export default function DashboardLayout({
     { name: 'Prédications', path: '/master/dashboard/preachings' },
     { name: 'Annonces', path: '/master/dashboard/announcements' },
     { name: 'Membres', path: '/master/dashboard/members' },
-    { name: 'Finances', path: '/master/dashboard/finances' },
+    { name: 'Caisse', path: '/master/dashboard/caisse' },
     { name: 'Paramètres', path: '/master/dashboard/settings' },
   ];
 
