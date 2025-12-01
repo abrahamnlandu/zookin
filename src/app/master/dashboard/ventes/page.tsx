@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { FiPrinter, FiDollarSign, FiUsers, FiFileText, FiPlus, FiMinus, FiShoppingCart, FiUser, FiAlertTriangle, FiSend } from 'react-icons/fi';
+import { FiPrinter, FiDollarSign, FiUsers, FiFileText, FiPlus, FiMinus, FiShoppingCart, FiUser, FiAlertTriangle, FiSend, FiCalendar } from 'react-icons/fi';
 
 // Types
 type VisitorCategory = 'National' | 'Expatrié' | 'Diplomatique' | 'Scientifique';
@@ -56,6 +56,7 @@ export default function CaissePage() {
   const [pendingOrders, setPendingOrders] = useState<PendingOrder[]>([]);
   const [currentSaleId, setCurrentSaleId] = useState<string>('');
   const [clientName, setClientName] = useState<string>('');
+  const [showSalesHistory, setShowSalesHistory] = useState(false);
 
   // Prix fixes
   const prices = {
@@ -65,33 +66,73 @@ export default function CaissePage() {
     'Scientifique': { 'Adulte': 0, 'Enfant': 0 },
   };
 
-  // Charger les données depuis le localStorage
+  // Charger les données depuis le localStorage au démarrage
   useEffect(() => {
-    const storedSales = localStorage.getItem('zoo-daily-sales');
-    const storedPendingOrders = localStorage.getItem('zoo-pending-orders');
-    
-    if (storedSales) {
+    const loadData = () => {
       try {
-        const parsedSales = JSON.parse(storedSales);
-        if (Array.isArray(parsedSales)) {
-          setDailySales(parsedSales);
+        const storedSales = localStorage.getItem('zoo-daily-sales');
+        const storedPendingOrders = localStorage.getItem('zoo-pending-orders');
+        
+        if (storedSales) {
+          const parsedSales = JSON.parse(storedSales);
+          if (Array.isArray(parsedSales)) {
+            setDailySales(parsedSales);
+          }
         }
-      } catch (error) {
-        console.error('Erreur lors du chargement des ventes:', error);
-      }
-    }
 
-    if (storedPendingOrders) {
-      try {
-        const parsedOrders = JSON.parse(storedPendingOrders);
-        if (Array.isArray(parsedOrders)) {
-          setPendingOrders(parsedOrders);
+        if (storedPendingOrders) {
+          const parsedOrders = JSON.parse(storedPendingOrders);
+          if (Array.isArray(parsedOrders)) {
+            setPendingOrders(parsedOrders);
+          }
         }
       } catch (error) {
-        console.error('Erreur lors du chargement des commandes en attente:', error);
+        console.error('Erreur lors du chargement des données:', error);
       }
-    }
+    };
+
+    loadData();
+    
+    // Écouter les changements dans localStorage pour la synchronisation entre onglets
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'zoo-daily-sales') {
+        try {
+          if (e.newValue) {
+            const parsedSales = JSON.parse(e.newValue);
+            if (Array.isArray(parsedSales)) {
+              setDailySales(parsedSales);
+            }
+          }
+        } catch (error) {
+          console.error('Erreur lors de la mise à jour des ventes:', error);
+        }
+      }
+      if (e.key === 'zoo-pending-orders') {
+        try {
+          if (e.newValue) {
+            const parsedOrders = JSON.parse(e.newValue);
+            if (Array.isArray(parsedOrders)) {
+              setPendingOrders(parsedOrders);
+            }
+          }
+        } catch (error) {
+          console.error('Erreur lors de la mise à jour des commandes en attente:', error);
+        }
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
+
+  // Sauvegarder les données dans localStorage
+  useEffect(() => {
+    localStorage.setItem('zoo-daily-sales', JSON.stringify(dailySales));
+  }, [dailySales]);
+
+  useEffect(() => {
+    localStorage.setItem('zoo-pending-orders', JSON.stringify(pendingOrders));
+  }, [pendingOrders]);
 
   // Calcul des totaux
   const totals = {
@@ -172,8 +213,10 @@ export default function CaissePage() {
 
     const newDailySales = [...dailySales, newSale];
     setDailySales(newDailySales);
-    localStorage.setItem('zoo-daily-sales', JSON.stringify(newDailySales));
     resetSale();
+    
+    // Notifier les autres onglets
+    localStorage.setItem('zoo-daily-sales-trigger', Date.now().toString());
     alert('Vente enregistrée avec succès!');
   };
 
@@ -211,8 +254,10 @@ export default function CaissePage() {
 
     const newPendingOrders = [...pendingOrders, pendingOrder];
     setPendingOrders(newPendingOrders);
-    localStorage.setItem('zoo-pending-orders', JSON.stringify(newPendingOrders));
     resetSale();
+    
+    // Notifier les autres onglets
+    localStorage.setItem('zoo-pending-orders-trigger', Date.now().toString());
     
     alert(`Commande transférée au service financier avec succès!\n\nRéférence: ${currentSaleId}\nJeton: ${transferToken}\n\nLe service financier traitera cette commande et générera une facture.`);
   };
@@ -223,21 +268,29 @@ export default function CaissePage() {
     setCurrentSaleId(`SALE-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`);
   };
 
-  const printReceipt = () => {
-    if (totals.totalVisitors === 0) {
-      alert('Aucune vente à imprimer');
-      return;
-    }
+  const printReceipt = (sale?: DailySale) => {
+    const targetSale = sale || {
+      id: currentSaleId,
+      date: new Date().toISOString(),
+      clientName: clientName.trim(),
+      items: sales.filter(item => item.quantity > 0),
+      totalAmount: totals.totalAmount,
+      totalVisitors: totals.totalVisitors,
+      discount: totals.discount,
+      finalAmount: totals.finalAmount
+    };
 
-    if (!clientName.trim()) {
+    if (!targetSale.clientName) {
       alert('Veuillez saisir le nom du client avant d\'imprimer le reçu');
       return;
     }
 
-    if (exceedsLimit) {
-      alert('Cette commande dépasse la limite de 50 tickets. Elle doit être transférée au service financier pour impression de facture.');
+    if (targetSale.totalVisitors === 0 && !sale) {
+      alert('Aucune vente à imprimer');
       return;
     }
+
+    const exceedsLimitInSale = targetSale.totalVisitors > 50;
 
     const receiptContent = `
       <html>
@@ -265,19 +318,20 @@ export default function CaissePage() {
             <h1>Zoo de Kinshasa</h1>
             <h2>REÇU DE VENTE</h2>
             <div class="receipt-info">
-              <div>Référence: ${currentSaleId}</div>
-              <div>Date: ${new Date().toLocaleString('fr-FR')}</div>
+              <div>Référence: ${targetSale.id}</div>
+              <div>Date: ${new Date(targetSale.date).toLocaleString('fr-FR')}</div>
             </div>
           </div>
 
-          ${exceedsLimit ? `
+          ${exceedsLimitInSale ? `
             <div class="limit-warning">
               <strong>ATTENTION:</strong> Cette commande dépasse la limite de 50 tickets et nécessite une facturation par le service financier.
+              <br>Jeton: ${(sale as any)?.transferToken || 'En attente de traitement'}
             </div>
           ` : ''}
 
           <div class="client-info">
-            <strong>Client:</strong> ${clientName}
+            <strong>Client:</strong> ${targetSale.clientName}
           </div>
           
           <table>
@@ -291,7 +345,7 @@ export default function CaissePage() {
               </tr>
             </thead>
             <tbody>
-              ${sales
+              ${targetSale.items
                 .filter(item => item.quantity > 0)
                 .map(item => `
                   <tr>
@@ -306,17 +360,17 @@ export default function CaissePage() {
           </table>
 
           <div style="text-align: right; margin-top: 15px;">
-            <div>Sous-total: <strong>${totals.totalAmount.toLocaleString()} FC</strong></div>
-            ${totals.discount > 0 ? `
-              <div class="discount">Réduction 10%: -${totals.discount.toLocaleString()} FC</div>
+            <div>Sous-total: <strong>${targetSale.totalAmount.toLocaleString()} FC</strong></div>
+            ${targetSale.discount > 0 ? `
+              <div class="discount">Réduction 10%: -${targetSale.discount.toLocaleString()} FC</div>
             ` : ''}
             <div style="font-size: 18px; margin-top: 10px; border-top: 1px solid #333; padding-top: 5px;">
-              TOTAL: <strong>${totals.finalAmount.toLocaleString()} FC</strong>
+              TOTAL: <strong>${targetSale.finalAmount.toLocaleString()} FC</strong>
             </div>
           </div>
 
           <div class="thank-you">
-            <p>Merci ${clientName} pour votre visite !</p>
+            <p>Merci ${targetSale.clientName} pour votre visite !</p>
           </div>
 
           <div class="footer">
@@ -344,9 +398,19 @@ export default function CaissePage() {
       return;
     }
 
-    const dailyTotal = dailySales.reduce((sum, sale) => sum + sale.finalAmount, 0);
-    const dailyVisitors = dailySales.reduce((sum, sale) => sum + sale.totalVisitors, 0);
-    const dailyDiscount = dailySales.reduce((sum, sale) => sum + sale.discount, 0);
+    const today = new Date().toDateString();
+    const todaySales = dailySales.filter(sale => 
+      new Date(sale.date).toDateString() === today
+    );
+
+    if (todaySales.length === 0) {
+      alert('Aucune vente enregistrée aujourd\'hui');
+      return;
+    }
+
+    const dailyTotal = todaySales.reduce((sum, sale) => sum + sale.finalAmount, 0);
+    const dailyVisitors = todaySales.reduce((sum, sale) => sum + sale.totalVisitors, 0);
+    const dailyDiscount = todaySales.reduce((sum, sale) => sum + sale.discount, 0);
 
     const reportContent = `
       <html>
@@ -374,14 +438,14 @@ export default function CaissePage() {
 
           <div class="summary">
             <h3>Résumé de la journée</h3>
-            <div>Total des ventes: ${dailySales.length}</div>
+            <div>Total des ventes: ${todaySales.length}</div>
             <div>Total des visiteurs: ${dailyVisitors}</div>
             <div>Total des recettes: ${dailyTotal.toLocaleString()} FC</div>
             <div>Total des réductions: ${dailyDiscount.toLocaleString()} FC</div>
             <div>Commandes en attente: ${pendingOrders.length}</div>
           </div>
 
-          <h3>Détail des ventes</h3>
+          <h3>Détail des ventes du jour</h3>
           <table>
             <thead>
               <tr>
@@ -395,7 +459,7 @@ export default function CaissePage() {
               </tr>
             </thead>
             <tbody>
-              ${dailySales.map(sale => `
+              ${todaySales.map(sale => `
                 <tr>
                   <td>${sale.id}</td>
                   <td>${sale.clientName}</td>
@@ -409,7 +473,7 @@ export default function CaissePage() {
               <tr class="total-row">
                 <td colspan="3">TOTAL JOURNALIER</td>
                 <td>${dailyVisitors}</td>
-                <td>${dailySales.reduce((sum, sale) => sum + sale.totalAmount, 0).toLocaleString()} FC</td>
+                <td>${todaySales.reduce((sum, sale) => sum + sale.totalAmount, 0).toLocaleString()} FC</td>
                 <td>${dailyDiscount.toLocaleString()} FC</td>
                 <td>${dailyTotal.toLocaleString()} FC</td>
               </tr>
@@ -418,7 +482,7 @@ export default function CaissePage() {
 
           <div class="footer">
             <p>Rapport généré le ${new Date().toLocaleString('fr-FR')}</p>
-            <p>Zoo de Kinshasa - Service de Caisse</p>
+            <p>Zoo de Kinshasa - Service de vente de tickets</p>
           </div>
         </body>
       </html>
@@ -443,7 +507,7 @@ export default function CaissePage() {
     >
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Caisse du Zoo</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Ventes des Tickets</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">
             Gestion des ventes de billets - Limite: 50 tickets par commande
           </p>
@@ -452,11 +516,29 @@ export default function CaissePage() {
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            onClick={printReceipt}
+            onClick={() => printReceipt()}
             className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
           >
+            <FiPrinter className="text-lg" />
+            <span>Imprimer Reçu</span>
+          </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={printDailyReport}
+            className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors"
+          >
+            <FiCalendar className="text-lg" />
+            <span>Rapport Journalier</span>
+          </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => setShowSalesHistory(!showSalesHistory)}
+            className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors"
+          >
             <FiFileText className="text-lg" />
-            <span>Rapport journalier</span>
+            <span>Historique</span>
           </motion.button>
         </div>
       </div>
@@ -479,6 +561,65 @@ export default function CaissePage() {
                 Elle doit être transférée au service financier pour traitement et facturation.
               </p>
             </div>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Historique des ventes */}
+      {showSalesHistory && (
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: 'auto' }}
+          className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6"
+        >
+          <h2 className="text-lg font-semibold mb-4 flex items-center">
+            <FiFileText className="mr-2 text-purple-600" />
+            Historique des Ventes Aujourd'hui
+          </h2>
+          
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+              <thead>
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Client</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Heure</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Visiteurs</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Montant</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                {dailySales
+                  .filter(sale => new Date(sale.date).toDateString() === new Date().toDateString())
+                  .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                  .map((sale) => (
+                    <tr key={sale.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                      <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">{sale.clientName}</td>
+                      <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
+                        {new Date(sale.date).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{sale.totalVisitors}</td>
+                      <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{sale.finalAmount.toLocaleString()} FC</td>
+                      <td className="px-4 py-3 text-sm">
+                        <button
+                          onClick={() => printReceipt(sale)}
+                          className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 flex items-center gap-1"
+                        >
+                          <FiPrinter className="text-sm" />
+                          Imprimer
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                {dailySales.filter(sale => new Date(sale.date).toDateString() === new Date().toDateString()).length === 0 && (
+                  <tr>
+                    <td colSpan={5} className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+                      Aucune vente enregistrée aujourd'hui
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
         </motion.div>
       )}
@@ -506,7 +647,7 @@ export default function CaissePage() {
               type="text"
               value={clientName}
               onChange={(e) => setClientName(e.target.value)}
-              placeholder="Ex: Jean Kamba ou Entreprise XYZ"
+              placeholder="Ex: Charon Lema ou Entreprise X"
               className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white transition-colors"
             />
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
@@ -679,7 +820,9 @@ export default function CaissePage() {
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Ventes aujourd'hui</h3>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">{dailySales.length}</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {dailySales.filter(sale => new Date(sale.date).toDateString() === new Date().toDateString()).length}
+                </p>
               </div>
               <div className="p-3 bg-green-100 dark:bg-green-900/50 rounded-lg">
                 <FiDollarSign className="text-2xl text-green-600 dark:text-green-400" />
@@ -695,7 +838,10 @@ export default function CaissePage() {
               <div>
                 <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Recettes du jour</h3>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {dailySales.reduce((sum, sale) => sum + sale.finalAmount, 0).toLocaleString()} FC
+                  {dailySales
+                    .filter(sale => new Date(sale.date).toDateString() === new Date().toDateString())
+                    .reduce((sum, sale) => sum + sale.finalAmount, 0)
+                    .toLocaleString()} FC
                 </p>
               </div>
               <div className="p-3 bg-blue-100 dark:bg-blue-900/50 rounded-lg">
@@ -728,18 +874,22 @@ export default function CaissePage() {
           >
             <h3 className="text-lg font-semibold mb-4">Dernières ventes</h3>
             <div className="space-y-3">
-              {dailySales.slice(-5).reverse().map((sale) => (
-                <div key={sale.id} className="flex justify-between items-center text-sm">
-                  <div>
-                    <div className="font-medium">{sale.clientName}</div>
-                    <div className="text-gray-500">{sale.totalVisitors} visiteurs • {sale.finalAmount.toLocaleString()} FC</div>
+              {dailySales
+                .filter(sale => new Date(sale.date).toDateString() === new Date().toDateString())
+                .slice(-5)
+                .reverse()
+                .map((sale) => (
+                  <div key={sale.id} className="flex justify-between items-center text-sm">
+                    <div>
+                      <div className="font-medium">{sale.clientName}</div>
+                      <div className="text-gray-500">{sale.totalVisitors} visiteurs • {sale.finalAmount.toLocaleString()} FC</div>
+                    </div>
+                    <div className="text-xs text-gray-400">
+                      {new Date(sale.date).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                    </div>
                   </div>
-                  <div className="text-xs text-gray-400">
-                    {new Date(sale.date).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
-                  </div>
-                </div>
-              ))}
-              {dailySales.length === 0 && (
+                ))}
+              {dailySales.filter(sale => new Date(sale.date).toDateString() === new Date().toDateString()).length === 0 && (
                 <div className="text-center text-gray-500 dark:text-gray-400 py-4">
                   Aucune vente aujourd'hui
                 </div>

@@ -39,14 +39,14 @@ export default function Header({ setIsMobileMenuOpen, navItems }: HeaderProps) {
           </motion.button>
 
           {/* Logo du Zoo */}
-          <Link href="/master/dashboard" className="flex items-center space-x-2">
+          {/* <Link href="/master/dashboard" className="flex items-center space-x-2">
             <div className="h-8 w-8 rounded-full bg-gradient-to-r from-green-500 to-emerald-600 flex items-center justify-center text-white font-bold text-sm">
               ZK
             </div>
             <span className="font-bold text-gray-800 dark:text-white hidden sm:block">
               Zoo Kinshasa
             </span>
-          </Link>
+          </Link> */}
         </div>
 
         <div className="flex-1 max-w-xl mx-4">
